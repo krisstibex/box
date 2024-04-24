@@ -1,0 +1,46 @@
+name: Sync and Release
+
+on:
+  schedule:
+    # 每天运行一次，你可以根据需要调整时间
+    - cron:  '0 0 * * *'
+  workflow_dispatch:
+    # 允许手动触发
+
+jobs:
+  sync-and-package:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout target repository
+      uses: actions/checkout@v2
+      with:
+        repository: dompling/boxjs.react
+        ref: gh-pages
+        path: 'target-repo'
+        
+    - name: Sync to current repository
+      uses: actions/checkout@v2
+      with:
+        path: 'current-repo'
+        
+    - name: Copy files to current repository
+      run: |
+        cp -r target-repo/* current-repo/
+        cd current-repo
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add .
+        git commit -m "Sync gh-pages from dompling/boxjs.react"
+        git push
+    
+    - name: Package and Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        cd current-repo
+        # 这里不再指定dist/目录，因为我们假设文件直接在根目录
+        # 打包根目录下的所有文件，你可以根据需要排除某些文件
+        zip -r release.zip ./*
+        # 使用GitHub CLI创建release并上传打包文件
+        gh release create "release-$(date +'%Y-%m-%d')" ./release.zip --notes "Automated release"
