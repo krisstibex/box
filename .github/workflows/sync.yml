@@ -3,7 +3,7 @@ name: Sync and Release
 on:
   schedule:
     # 每天运行一次，你可以根据需要调整时间
-    - cron:  '0 0 * * *'
+    - cron:  '0 0 * * 1'
   workflow_dispatch:
     # 允许手动触发
 
